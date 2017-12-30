@@ -19,22 +19,27 @@ class MainWindow;
 
 class MainWindow : public QMainWindow
 {
+
     Q_OBJECT
 
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void findDev();
+    void updateCheckboxState();
+
 public slots:
     void startSniff();
     void pauseSniff();
     void clearSniff();
     void updateDev();
     void addCapList(Pkt_display pktdisplay);
-    void displayPayload(int rowc);
+    void displayPayload(int, int);
+
 private:
     Ui::MainWindow *ui;
     Sniffer_thread *snifferthread;
+
 };
 
 #endif // MAINWINDOW_H

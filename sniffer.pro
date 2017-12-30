@@ -30,7 +30,8 @@ SOURCES += \
 
 HEADERS += \
         mainwindow.h \
-    sniffer.h
+    sniffer.h \
+    fragments.h
 
 FORMS += \
         mainwindow.ui

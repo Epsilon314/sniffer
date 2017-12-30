@@ -1,33 +1,134 @@
 #include "sniffer.h"
 #include "mainwindow.h"
 
+
 QString p_dev;
 Pkt_display Sniffer_thread::pkt_display;
+pkt_frag_info Sniffer_thread::pkt_frag;
 
-void Sniffer_thread::pkt_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *pktdata) {
+dg_seq head;
+
+void Sniffer_thread::pkt_handler(u_char *, const struct pcap_pkthdr *header,
+                                 const u_char *pktdata) {
+
     eth_header *eth = (eth_header*)pktdata;
+    switch (eth->eth_type) {
+    case 0x0008:
+        pkt_display.eth_proto = QString("IP");
+        break;
+    case 0x0608:
+        pkt_display.eth_proto = QString("ARP");
+        break;
+    case 0x3580:
+        pkt_display.eth_proto = QString("RARP");
+        break;
+    default:
+        pkt_display.eth_proto = QString("UNKNOWN");
+        break;
+    }
     pkt_display.len = QString::number(header->len);
+    pkt_frag.tlen = header->len;
+
     if(header->len >= 14) {
+
         ip_header *ip = (ip_header*)(pktdata+14);
+        pkt_display.ip_uid = ip->ip_id;
+        pkt_display.ip_offset = ip->ip_off;
+        pkt_frag.ip_id = ip->ip_id;
+        pkt_frag.ip_off = ip->ip_off;
+        pkt_frag.len = ip->ip_len;
+        for (int i = 0; i < 4; i++) {
+            pkt_frag.ip_src[i] = ip->ip_src[i];
+            pkt_frag.ip_dst[i] = ip->ip_dst[i];
+        }
+
         switch(ip->ip_p) {
-            case IPPROTO_TCP:
-                pkt_display.proto = QString("TCP");
+        case IPPROTO_TCP:
+            pkt_display.ip_proto = QString("TCP");
+            break;
+
+        case IPPROTO_UDP:
+            pkt_display.ip_proto = QString("UDP");
+            break;
+
+        case IPPROTO_ICMP:
+            pkt_display.ip_proto = QString("ICMP");
+            break;
+
+        case IPPROTO_IP:
+            pkt_display.ip_proto = QString("IP");
+            break;
+
+        case IPPROTO_IGMP:
+            pkt_display.ip_proto = QString("IGMP");
+            break;
+
+        default:
+            pkt_display.ip_proto = QString("UNKNOWN");
+            break;
+
+        }
+
+        pkt_display.sip = QString("%1.%2.%3.%4").arg(ip->ip_src[0])
+                .arg(ip->ip_src[1]).arg(ip->ip_src[2]).arg(ip->ip_src[3]);
+        pkt_display.dip = QString("%1.%2.%3.%4").arg(ip->ip_dst[0])
+                .arg(ip->ip_dst[1]).arg(ip->ip_dst[2]).arg(ip->ip_dst[3]);
+
+        int ip_size = (ip->ip_vhl & 0x0f) * 4;
+        pkt_frag.head_size = ip_size;
+        if (ip->ip_p == IPPROTO_TCP) {
+            tcp_header *tcp = (tcp_header *)(pktdata + 14 + ip_size);
+            switch (tcp->th_dport) {
+            case 0x5000:
+                pkt_display.trans_proto = QString("HTTP");
                 break;
-            case IPPROTO_UDP:
-                pkt_display.proto = QString("UDP");
+            case 0x1400:
+            case 0x1500:
+                pkt_display.trans_proto = QString("TCP");
                 break;
-            case IPPROTO_ICMP:
-                pkt_display.proto = QString("ICMP");
+            case 0x1700:
+                pkt_display.trans_proto = QString("TELNET");
                 break;
-            case IPPROTO_IP:
-                pkt_display.proto = QString("IP");
+            case 0x1900:
+                pkt_display.trans_proto = QString("SMTP");
+                break;
+            case 0x3500:
+                pkt_display.trans_proto = QString("DNS");
+                break;
+            case 0x6e00:
+                pkt_display.trans_proto = QString("POP3");
+                break;
+            case 0xbb01:
+                pkt_display.trans_proto = QString("HTTPS");
+                break;
+            }
+            switch (tcp->th_sport) {
+            case 0x5000:
+                pkt_display.trans_proto = QString("HTTP");
+                break;
+            case 0x1400:
+            case 0x1500:
+                pkt_display.trans_proto = QString("TCP");
+                break;
+            case 0x1700:
+                pkt_display.trans_proto = QString("TELNET");
+                break;
+            case 0x1900:
+                pkt_display.trans_proto = QString("SMTP");
+                break;
+            case 0x3500:
+                pkt_display.trans_proto = QString("DNS");
+                break;
+            case 0x6e00:
+                pkt_display.trans_proto = QString("POP3");
+                break;
+            case 0xbb01:
+                pkt_display.trans_proto = QString("HTTPS");
                 break;
             default:
-                pkt_display.proto = QString("UNKNOWN");
-                break;
+                pkt_display.trans_proto = QString("UNKNOWN");
+            }
         }
-        pkt_display.sip = QString("%1.%2.%3.%4").arg(ip->ip_src[0]).arg(ip->ip_src[1]).arg(ip->ip_src[2]).arg(ip->ip_src[3]);
-        pkt_display.dip = QString("%1.%2.%3.%4").arg(ip->ip_dst[0]).arg(ip->ip_dst[1]).arg(ip->ip_dst[2]).arg(ip->ip_dst[3]);
     }
     pkt_display.pktdata = pktdata;
 }
@@ -65,8 +166,9 @@ void Sniffer_thread::run() {
             }
         }
         pcap_loop(handle, 1, pkt_handler, NULL);
-        //printf("%s %s %s \n",proto.toStdString().c_str(),sip.toStdString().c_str(),dip.toStdString().c_str());
-        emit pkt_info(pkt_display);
+        if (ip_Fragment_reassamble(_reassamble)) {
+            emit pkt_info(pkt_display);
+        }
     }
 }
 
@@ -83,3 +185,83 @@ bool Sniffer_thread::disactived() {
     return !_active;
 }
 
+bool Sniffer_thread::check_all_fragments(dg_seq d) {
+    int totalLen = 0;
+    fragments *f;
+    f = d.fg;
+    while(f->next != NULL) {
+        totalLen += f->len;
+    }
+    if (totalLen == d.len) {
+        pkt_display.len = d.len;
+        //code to assemble datagram
+        return true;
+    }
+    else return false;
+}
+
+
+bool Sniffer_thread::ip_Fragment_reassamble(bool enable) {
+    if(enable) {
+        //printf("%04x ",pkt_frag.ip_off);
+
+        int df = pkt_frag.ip_off & 0x0040;
+        if (pkt_frag.ip_off == 0 || df != 0) {
+            return true;
+        }
+
+        fragments f;
+        f.mf = ntohs(pkt_frag.ip_off) & 0x2000;
+        f.offset = ntohs(pkt_frag.ip_off) & 0x1fff;
+        int id = ntohs(pkt_frag.ip_id);
+        f.len = pkt_frag.len;
+        f.head = pkt_frag.ud + 14;
+        f.data = pkt_frag.ud + 14 + pkt_frag.head_size;
+
+        dg_seq *d;
+        d = &head;
+        bool find = false;
+        while (d->next != NULL) {
+            d = d->next;
+            bool flag = true;
+            for(int i = 0; i < 4; i ++) {
+                if (d->ip_src[i] != pkt_frag.ip_src[i]) flag = false;
+                if (d->ip_dst[i] != pkt_frag.ip_dst[i]) flag = false;
+            }
+            if (id != d->ip_id) flag = false;
+            if (pkt_frag.ip_p != d->ip_p) flag = false;
+            if(flag) {
+                find = true;
+                fragments *insert_f;
+                insert_f = d->fg;
+                while (insert_f->next != NULL) insert_f = insert_f->next;
+                insert_f->next = &f;
+                return check_all_fragments(*d);
+            }
+        }
+        if (!find) {
+            dg_seq nd;
+            for (int i = 0; i < 4; i ++) {
+                nd.ip_src[i] = pkt_frag.ip_src[i];
+                nd.ip_dst[i] = pkt_frag.ip_dst[i];
+            }
+            nd.ip_id = id;
+            nd.ip_p = pkt_frag.ip_p;
+            nd.len = pkt_frag.tlen;
+            nd.fg = &f;
+            dg_seq *insert_d;
+            insert_d = &head;
+            while (insert_d->next != NULL) insert_d = insert_d->next;
+            insert_d = &nd;
+            return check_all_fragments(nd);
+        }
+    }
+    else {
+        return true;
+    }
+    return false;
+}
+
+void Sniffer_thread::set_mode_reassamble(bool enable) {
+   _reassamble = enable;
+}
