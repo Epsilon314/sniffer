@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>677</width>
-    <height>562</height>
+    <width>865</width>
+    <height>583</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <widget class="QComboBox" name="comboBox">
     <property name="geometry">
      <rect>
-      <x>520</x>
+      <x>630</x>
       <y>20</y>
       <width>121</width>
       <height>24</height>
@@ -29,8 +29,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>441</width>
-      <height>321</height>
+      <width>561</width>
+      <height>341</height>
      </rect>
     </property>
     <column>
@@ -70,8 +70,8 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>320</y>
-      <width>441</width>
+      <y>340</y>
+      <width>401</width>
       <height>191</height>
      </rect>
     </property>
@@ -87,10 +87,10 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>450</x>
+      <x>570</x>
       <y>20</y>
-      <width>46</width>
-      <height>16</height>
+      <width>51</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
@@ -100,9 +100,9 @@
    <widget class="QTextBrowser" name="textBrowser_2">
     <property name="geometry">
      <rect>
-      <x>440</x>
-      <y>320</y>
-      <width>231</width>
+      <x>400</x>
+      <y>340</y>
+      <width>161</width>
       <height>191</height>
      </rect>
     </property>
@@ -110,14 +110,175 @@
    <widget class="QCheckBox" name="checkBox">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>50</y>
-      <width>201</width>
+      <x>570</x>
+      <y>40</y>
+      <width>211</width>
       <height>71</height>
      </rect>
     </property>
     <property name="text">
-     <string>Enable Fragment Reassamble</string>
+     <string> Enable Fragment Reassamble</string>
+    </property>
+   </widget>
+   <widget class="QTextBrowser" name="textBrowser_3">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>340</y>
+      <width>301</width>
+      <height>192</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>100</y>
+      <width>60</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Filter:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>130</y>
+      <width>60</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Protocol:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>170</y>
+      <width>60</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Src ip:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>210</y>
+      <width>60</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Dst ip:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>250</y>
+      <width>60</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Src port:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_7">
+    <property name="geometry">
+     <rect>
+      <x>720</x>
+      <y>250</y>
+      <width>60</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Dst port:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>290</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Advanced:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>120</y>
+      <width>113</width>
+      <height>24</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_2">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>170</y>
+      <width>113</width>
+      <height>24</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_3">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>210</y>
+      <width>113</width>
+      <height>24</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_4">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>250</y>
+      <width>31</width>
+      <height>24</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_6">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>290</y>
+      <width>113</width>
+      <height>24</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_5">
+    <property name="geometry">
+     <rect>
+      <x>780</x>
+      <y>250</y>
+      <width>31</width>
+      <height>24</height>
+     </rect>
     </property>
    </widget>
   </widget>
@@ -126,7 +287,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>677</width>
+     <width>865</width>
      <height>22</height>
     </rect>
    </property>
@@ -138,7 +299,14 @@
     <addaction name="actionsniffpause"/>
     <addaction name="actionsniffclear"/>
    </widget>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionSave"/>
+   </widget>
    <addaction name="menu_Start"/>
+   <addaction name="menu_File"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
@@ -153,21 +321,22 @@
    <addaction name="actionsniffrun"/>
    <addaction name="actionsniffpause"/>
    <addaction name="actionsniffclear"/>
+   <addaction name="actionSave"/>
   </widget>
   <action name="actionsniffclear">
    <property name="text">
-    <string>clear</string>
+    <string>Clear</string>
    </property>
    <property name="toolTip">
-    <string>clear</string>
+    <string>clear the table</string>
    </property>
   </action>
   <action name="actionsniffpause">
    <property name="text">
-    <string>pause</string>
+    <string>Pause</string>
    </property>
    <property name="toolTip">
-    <string>pause</string>
+    <string>pause the sniffer, click Run to continue</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -175,13 +344,21 @@
   </action>
   <action name="actionsniffrun">
    <property name="text">
-    <string>run</string>
+    <string>Run</string>
    </property>
    <property name="toolTip">
-    <string>run</string>
+    <string>start the sniffer</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="toolTip">
+    <string>save</string>
    </property>
   </action>
  </widget>
@@ -252,11 +429,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionSave</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>saveFileDiag()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>432</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>startSniff()</slot>
   <slot>updateDev()</slot>
   <slot>pauseSniff()</slot>
   <slot>clearSniff()</slot>
+  <slot>saveFileDiag()</slot>
  </slots>
 </ui>

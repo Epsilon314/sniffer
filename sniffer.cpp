@@ -3,24 +3,47 @@
 
 
 QString p_dev;
+QString p_filter;
 Pkt_display Sniffer_thread::pkt_display;
 pkt_frag_info Sniffer_thread::pkt_frag;
+pcap_dumper_t *dumpfile;
+extern const char* p_path;
 
 dg_seq head;
 
-void Sniffer_thread::pkt_handler(u_char *, const struct pcap_pkthdr *header,
+void Sniffer_thread::pkt_handler(u_char *dumpfile, const struct pcap_pkthdr *header,
                                  const u_char *pktdata) {
 
+    pcap_dump(dumpfile,header,pktdata);
     eth_header *eth = (eth_header*)pktdata;
-    switch (eth->eth_type) {
-    case 0x0008:
+    pkt_display.smac = QString("%1:%2:%3:%4:%5:%6").arg(eth->eth_shost[0])
+                                                   .arg(eth->eth_shost[1])
+                                                   .arg(eth->eth_shost[2])
+                                                   .arg(eth->eth_shost[3])
+                                                   .arg(eth->eth_shost[4])
+                                                   .arg(eth->eth_shost[5]);
+
+    pkt_display.dmac = QString("%1:%2:%3:%4:%5:%6").arg(eth->eth_dhost[0])
+                                                   .arg(eth->eth_dhost[1])
+                                                   .arg(eth->eth_dhost[2])
+                                                   .arg(eth->eth_dhost[3])
+                                                   .arg(eth->eth_dhost[4])
+                                                   .arg(eth->eth_dhost[5]);
+    switch (ntohs(eth->eth_type)) {
+    case 0x0800:
         pkt_display.eth_proto = QString("IP");
         break;
-    case 0x0608:
+    case 0x0806:
         pkt_display.eth_proto = QString("ARP");
         break;
-    case 0x3580:
+    case 0x8035:
         pkt_display.eth_proto = QString("RARP");
+        break;
+    case 0x86dd:
+        pkt_display.eth_proto = QString("IPv6");
+        break;
+    case 0x8864:
+        pkt_display.eth_proto = QString("PPPoE");
         break;
     default:
         pkt_display.eth_proto = QString("UNKNOWN");
@@ -32,8 +55,7 @@ void Sniffer_thread::pkt_handler(u_char *, const struct pcap_pkthdr *header,
     if(header->len >= 14) {
 
         ip_header *ip = (ip_header*)(pktdata+14);
-        pkt_display.ip_uid = ip->ip_id;
-        pkt_display.ip_offset = ip->ip_off;
+
         pkt_frag.ip_id = ip->ip_id;
         pkt_frag.ip_off = ip->ip_off;
         pkt_frag.len = ip->ip_len;
@@ -78,6 +100,8 @@ void Sniffer_thread::pkt_handler(u_char *, const struct pcap_pkthdr *header,
         pkt_frag.head_size = ip_size;
         if (ip->ip_p == IPPROTO_TCP) {
             tcp_header *tcp = (tcp_header *)(pktdata + 14 + ip_size);
+            pkt_display.sport = QString::number(ntohs(tcp->th_sport));
+            pkt_display.dport = QString::number(ntohs(tcp->th_dport));
             switch (tcp->th_dport) {
             case 0x5000:
                 pkt_display.trans_proto = QString("HTTP");
@@ -139,7 +163,7 @@ void Sniffer_thread::run() {
     const char *dev;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *handle;
-    char filter_exp[] = "ip";
+    const char *filter_exp;
     struct bpf_program fp;
     bpf_u_int32 mask;
     bpf_u_int32 net;
@@ -148,6 +172,7 @@ void Sniffer_thread::run() {
         if (_refresh) {
             _refresh = false;
             dev = p_dev.toStdString().c_str();
+            filter_exp = p_filter.toStdString().c_str();
             if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
             exit(1);
             }
@@ -164,8 +189,9 @@ void Sniffer_thread::run() {
             if (pcap_setfilter(handle, &fp) == -1) {
                 exit(1);
             }
+            dumpfile = pcap_dump_open(handle,p_path);
         }
-        pcap_loop(handle, 1, pkt_handler, NULL);
+        pcap_loop(handle, 1, pkt_handler, (unsigned char*)dumpfile);
         if (ip_Fragment_reassamble(_reassamble)) {
             emit pkt_info(pkt_display);
         }
@@ -264,4 +290,8 @@ bool Sniffer_thread::ip_Fragment_reassamble(bool enable) {
 
 void Sniffer_thread::set_mode_reassamble(bool enable) {
    _reassamble = enable;
+}
+
+void Sniffer_thread::saveDump() {
+    pcap_dump_close(dumpfile);
 }

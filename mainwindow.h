@@ -12,6 +12,11 @@
 #include <time.h>
 #include <string.h>
 #include "sniffer.h"
+#include <QFileDialog>
+#include <QMessageBox>
+#include <iostream>
+#include <fstream>
+#include <QDataStream>
 
 namespace Ui {
 class MainWindow;
@@ -27,6 +32,7 @@ public:
     ~MainWindow();
     void findDev();
     void updateCheckboxState();
+    void generateFilterExpression();
 
 public slots:
     void startSniff();
@@ -35,6 +41,8 @@ public slots:
     void updateDev();
     void addCapList(Pkt_display pktdisplay);
     void displayPayload(int, int);
+    void updatePktInfo(int,int);
+    void saveFileDiag();
 
 private:
     Ui::MainWindow *ui;

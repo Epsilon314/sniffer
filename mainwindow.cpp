@@ -4,8 +4,11 @@
 
 const int PKTUPLIMIT = 80000;
 Pkt_display buff[PKTUPLIMIT];
+const char* p_path = "temp.pcap";
+const QString q_path = QString("temp.pcap");
 
 extern QString p_dev ;
+extern QString p_filter;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,6 +27,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidget->setColumnWidth(0,170);
+    ui->tableWidget->setColumnWidth(1,170);
+    ui->tableWidget->setColumnWidth(2,100);
+    ui->tableWidget->setColumnWidth(3,100);
 
     findDev();
     updateDev();
@@ -31,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(snifferthread,SIGNAL(pkt_info(Pkt_display)),this,
             SLOT(addCapList(Pkt_display)));
     connect(ui->tableWidget,SIGNAL(cellClicked(int,int)),this,SLOT(displayPayload(int,int)));
+    connect(ui->tableWidget,SIGNAL(cellClicked(int,int)),this,SLOT(updatePktInfo(int,int)));
 }
 
 MainWindow::~MainWindow()
@@ -61,6 +69,7 @@ void MainWindow::updateDev() {
 
 void MainWindow::startSniff() {
     MainWindow::updateCheckboxState();
+    MainWindow::generateFilterExpression();
     if (snifferthread->disactived()) {
         snifferthread->enable();
     }
@@ -150,4 +159,95 @@ void MainWindow::updateCheckboxState() {
     else {
         snifferthread->set_mode_reassamble(false);
     }
+}
+
+void MainWindow::updatePktInfo(int rowc,int) {
+    ui->textBrowser_3->clear();
+
+    Pkt_display pkt = buff[rowc];
+
+    QString devInfo = QString("Interface:%1 Length:%2").arg(p_dev).arg(pkt.len);
+    QString ethInfo = QString("Source MAC %1\nDestination MAC %2\nETHERNET Type: %3")
+            .arg(pkt.smac).arg(pkt.dmac).arg(pkt.eth_proto);
+    QString ipInfo = QString("%1").arg(pkt.trans_proto);
+    QString tcpInfo = QString("SourcePort:%1 DestinationPort:%2").arg(pkt.sport).arg(pkt.dport);
+
+    ui->textBrowser_3->insertPlainText(devInfo);
+    ui->textBrowser_3->insertPlainText("\n");
+    ui->textBrowser_3->insertPlainText(ethInfo);
+    if (pkt.eth_proto == QString("IP")) {
+        ui->textBrowser_3->insertPlainText("\n");
+        ui->textBrowser_3->insertPlainText(ipInfo);
+        if(pkt.ip_proto == QString("TCP")) {
+            ui->textBrowser_3->insertPlainText("\n");
+            ui->textBrowser_3->insertPlainText(tcpInfo);
+        }
+    }
+}
+
+void MainWindow::generateFilterExpression() {
+    p_filter = QString("");
+    if(ui->lineEdit_5->text() != QString("")) {
+        p_filter = ui->lineEdit_6->text();
+    }
+    else {
+        if(ui->lineEdit->text() != QString("")) {
+            p_filter = p_filter + QString("%1 ").arg(ui->lineEdit->text());
+        }
+        if(ui->lineEdit_2->text() != QString("")) {
+            if(p_filter != QString("")) {
+                p_filter = p_filter + QString("and ");
+            }
+            p_filter = p_filter + QString("src host %1 ").arg(ui->lineEdit_2->text());
+        }
+        if(ui->lineEdit_3->text() != QString("")) {
+            if(p_filter != QString("")) {
+                p_filter = p_filter + QString("and ");
+            }
+            p_filter = p_filter + QString("dst host %1 ").arg(ui->lineEdit_3->text());
+        }
+        if(ui->lineEdit_4->text() != QString("")) {
+            if(p_filter != QString("")) {
+                p_filter = p_filter + QString("and ");
+            }
+            p_filter = p_filter + QString("src port %1 ").arg(ui->lineEdit_4->text());
+        }
+        if(ui->lineEdit_5->text() != QString("")) {
+            if(p_filter != QString("")) {
+                p_filter = p_filter + QString("and ");
+            }
+            p_filter = p_filter + QString("dst host %1 ").arg(ui->lineEdit_5->text());
+        }
+    }
+    printf("%s\n",p_filter.toStdString().c_str());
+}
+
+void MainWindow::saveFileDiag() {
+    snifferthread->saveDump();
+    QFileDialog *diag = new QFileDialog(this);
+    diag->setWindowTitle("Save as");
+    diag->setAcceptMode(QFileDialog::AcceptSave);
+    diag->setFileMode(QFileDialog::AnyFile);
+    diag->setViewMode(QFileDialog::Detail);
+    QString path = QFileDialog::getSaveFileName(this,tr("Open File"),".",tr("Text Files(*.pcap)"));
+    QFile::copy(q_path,path);
+    /*
+    if(!path.isEmpty()) {
+        QFile file(path);
+        if(!file.open(QIODevice::WriteOnly)){
+            QMessageBox::warning(this, tr("Write File"),
+                                 tr("Can't open file:\n%1").arg(path));
+            return;
+        }
+        QFile dump(q_path);
+        dump.open(QIODevice::ReadOnly);
+
+
+        file.close();
+    }
+    else {
+        QMessageBox::warning(this, tr("Path"),
+                             tr("You did not select any file."));
+    }
+    */
 }

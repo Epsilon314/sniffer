@@ -13,34 +13,33 @@
 class Pkt_display {
 public:
     Pkt_display() {
+        smac = "";
+        dmac = "";
+        eth_proto = "";
+
         sip = "";
         dip = "";
-        eth_proto = "";
         ip_proto = "";
+
         trans_proto = "";
-        ip_uid = "";
-        ip_offset = "";
+        sport = "";
+        dport = "";
+
         len = "";
     }
-    Pkt_display(QString c_sip,QString c_dip,QString c_eth_proto, QString c_trans_proto,
-                QString c_ip_uid,QString c_ip_offset,QString c_ip_proto,QString c_len,const u_char* c_data) {
-        sip = c_sip;
-        dip = c_dip;
-        eth_proto = c_eth_proto;
-        ip_proto = c_ip_proto;
-        trans_proto = c_trans_proto;
-        ip_uid = c_ip_uid;
-        ip_offset = c_ip_offset;
-        len = c_len;
-        pktdata = c_data;
-    }
+
+    QString smac;
+    QString dmac;
+    QString eth_proto;
+
     QString sip;
     QString dip;
-    QString eth_proto;
     QString ip_proto;
+
     QString trans_proto;
-    QString ip_uid;
-    QString ip_offset;
+    QString sport;
+    QString dport;
+
     QString len;
     const u_char* pktdata;
 };
@@ -89,12 +88,13 @@ public:
     void disable();
     void enable();
     bool disactived();
-    static void pkt_handler(u_char *, const struct pcap_pkthdr *header, const u_char *pktdata);
+    static void pkt_handler(u_char *dumpfile, const struct pcap_pkthdr *header, const u_char *pktdata);
     static Pkt_display pkt_display;
     static pkt_frag_info pkt_frag;
     bool ip_Fragment_reassamble(bool);
     void set_mode_reassamble(bool);
     bool check_all_fragments(dg_seq d);
+    void saveDump();
 private:
     bool _active;
     bool _refresh;
