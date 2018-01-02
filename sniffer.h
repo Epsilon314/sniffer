@@ -9,6 +9,8 @@
 #include <string.h>
 #include <QMetaType>
 #include <fragments.h>
+#include <vector>
+#include <sstream>
 
 class Pkt_display {
 public:

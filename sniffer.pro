@@ -37,3 +37,6 @@ FORMS += \
         mainwindow.ui
 
 LIBS += -L/usr/local/lib -lpcap
+
+RESOURCES += \
+    icon.qrc

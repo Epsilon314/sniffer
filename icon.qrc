@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/new/icon">
+        <file>res/389.gif</file>
+        <file>res/560489.gif</file>
+        <file>res/1186321.gif</file>
+        <file>res/1186688.gif</file>
+    </qresource>
+</RCC>

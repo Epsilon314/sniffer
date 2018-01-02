@@ -117,12 +117,114 @@ void MainWindow::addCapList(Pkt_display pktdisplay) {
     }
     item_len = new QTableWidgetItem(pktdisplay.len);
 
+    if(pktdisplay.eth_proto == QString("ARP")) {
+        item_sip->setBackgroundColor(QColor(200,150,120));
+        item_dip->setBackgroundColor(QColor(200,150,120));
+        item_proto->setBackgroundColor(QColor(200,150,120));
+        item_len->setBackgroundColor(QColor(200,150,120));
+    }
+    if(pktdisplay.eth_proto == QString("RARP")) {
+        item_sip->setBackgroundColor(QColor(200,150,150));
+        item_dip->setBackgroundColor(QColor(200,150,150));
+        item_proto->setBackgroundColor(QColor(200,150,150));
+        item_len->setBackgroundColor(QColor(200,150,150));
+    }
+    if(pktdisplay.eth_proto == QString("IPv6")) {
+        item_sip->setBackgroundColor(QColor(160,150,180));
+        item_dip->setBackgroundColor(QColor(160,150,180));
+        item_proto->setBackgroundColor(QColor(160,150,180));
+        item_len->setBackgroundColor(QColor(160,150,180));
+    }
+    if(pktdisplay.eth_proto == QString("PPPoE")) {
+        item_sip->setBackgroundColor(QColor(100,200,120));
+        item_dip->setBackgroundColor(QColor(100,200,120));
+        item_proto->setBackgroundColor(QColor(100,200,120));
+        item_len->setBackgroundColor(QColor(100,200,120));
+    }
+    if(pktdisplay.ip_proto == QString("TCP")
+            && pktdisplay.eth_proto == QString("IP")) {
+        item_sip->setBackgroundColor(QColor(100,150,200));
+        item_dip->setBackgroundColor(QColor(100,150,200));
+        item_proto->setBackgroundColor(QColor(100,150,200));
+        item_len->setBackgroundColor(QColor(100,150,200));
+    }
+    if(pktdisplay.ip_proto == QString("UDP")
+            && pktdisplay.eth_proto == QString("IP")) {
+        item_sip->setBackgroundColor(QColor(200,200,80));
+        item_dip->setBackgroundColor(QColor(200,200,80));
+        item_proto->setBackgroundColor(QColor(200,200,80));
+        item_len->setBackgroundColor(QColor(200,200,80));
+    }
+    if(pktdisplay.ip_proto == QString("ICMP")
+            && pktdisplay.eth_proto == QString("IP")) {
+        item_sip->setBackgroundColor(QColor(250,150,120));
+        item_dip->setBackgroundColor(QColor(250,150,120));
+        item_proto->setBackgroundColor(QColor(250,150,120));
+        item_len->setBackgroundColor(QColor(250,150,120));
+    }
+    if(pktdisplay.ip_proto == QString("IGMP")
+            && pktdisplay.eth_proto == QString("IP")) {
+        item_sip->setBackgroundColor(QColor(200,150,250));
+        item_dip->setBackgroundColor(QColor(200,150,250));
+        item_proto->setBackgroundColor(QColor(200,150,250));
+        item_len->setBackgroundColor(QColor(200,150,250));
+    }
+    if(pktdisplay.trans_proto == QString("HTTP")
+            && pktdisplay.ip_proto == QString("TCP")) {
+        item_sip->setBackgroundColor(QColor(120,250,250));
+        item_dip->setBackgroundColor(QColor(120,250,250));
+        item_proto->setBackgroundColor(QColor(120,250,250));
+        item_len->setBackgroundColor(QColor(120,250,250));
+    }
+    if(pktdisplay.trans_proto == QString("FTP")
+            && pktdisplay.ip_proto == QString("TCP")) {
+        item_sip->setBackgroundColor(QColor(200,50,250));
+        item_dip->setBackgroundColor(QColor(200,50,250));
+        item_proto->setBackgroundColor(QColor(200,50,250));
+        item_len->setBackgroundColor(QColor(200,50,250));
+    }
+    if(pktdisplay.trans_proto == QString("TELNET")
+            && pktdisplay.ip_proto == QString("TCP")) {
+        item_sip->setBackgroundColor(QColor(220,110,200));
+        item_dip->setBackgroundColor(QColor(220,110,200));
+        item_proto->setBackgroundColor(QColor(220,110,200));
+        item_len->setBackgroundColor(QColor(220,110,200));
+    }
+    if(pktdisplay.trans_proto == QString("SMTP")
+            && pktdisplay.ip_proto == QString("TCP")) {
+        item_sip->setBackgroundColor(QColor(180,230,180));
+        item_dip->setBackgroundColor(QColor(180,230,180));
+        item_proto->setBackgroundColor(QColor(180,230,180));
+        item_len->setBackgroundColor(QColor(180,230,180));
+    }
+    if(pktdisplay.trans_proto == QString("DNS")
+            && pktdisplay.ip_proto == QString("TCP")) {
+        item_sip->setBackgroundColor(QColor(180,180,220));
+        item_dip->setBackgroundColor(QColor(180,180,220));
+        item_proto->setBackgroundColor(QColor(180,180,220));
+        item_len->setBackgroundColor(QColor(180,180,220));
+    }
+    if(pktdisplay.trans_proto == QString("POP3")
+            && pktdisplay.ip_proto == QString("TCP")) {
+        item_sip->setBackgroundColor(QColor(200,180,250));
+        item_dip->setBackgroundColor(QColor(200,180,250));
+        item_proto->setBackgroundColor(QColor(200,180,250));
+        item_len->setBackgroundColor(QColor(200,180,250));
+    }
+    if(pktdisplay.trans_proto == QString("HTTPS")
+            && pktdisplay.ip_proto == QString("TCP")) {
+        item_sip->setBackgroundColor(QColor(250,120,250));
+        item_dip->setBackgroundColor(QColor(250,120,250));
+        item_proto->setBackgroundColor(QColor(250,120,250));
+        item_len->setBackgroundColor(QColor(250,120,250));
+    }
+
     ui->tableWidget->setItem(rowC, 0, item_sip);
     ui->tableWidget->setItem(rowC, 1, item_dip);
     ui->tableWidget->setItem(rowC, 2, item_proto);
     ui->tableWidget->setItem(rowC, 3, item_len);
-
     buff[rowC] = pktdisplay;
+
 }
 
 void MainWindow::displayPayload(int rowc,int) {
@@ -176,8 +278,10 @@ void MainWindow::updatePktInfo(int rowc,int) {
     ui->textBrowser_3->insertPlainText("\n");
     ui->textBrowser_3->insertPlainText(ethInfo);
     if (pkt.eth_proto == QString("IP")) {
-        ui->textBrowser_3->insertPlainText("\n");
-        ui->textBrowser_3->insertPlainText(ipInfo);
+        if(ipInfo != QString("UNKNOWN")) {
+            ui->textBrowser_3->insertPlainText("\n");
+            ui->textBrowser_3->insertPlainText(ipInfo);
+        }
         if(pkt.ip_proto == QString("TCP")) {
             ui->textBrowser_3->insertPlainText("\n");
             ui->textBrowser_3->insertPlainText(tcpInfo);
@@ -230,7 +334,10 @@ void MainWindow::saveFileDiag() {
     diag->setFileMode(QFileDialog::AnyFile);
     diag->setViewMode(QFileDialog::Detail);
     QString path = QFileDialog::getSaveFileName(this,tr("Open File"),".",tr("Text Files(*.pcap)"));
-    QFile::copy(q_path,path);
+    if (!QFile::copy(q_path,path)) {
+        QMessageBox::warning(this, tr("Write File"),
+                             tr("Can't open file:\n%1").arg(path));
+    }
     /*
     if(!path.isEmpty()) {
         QFile file(path);

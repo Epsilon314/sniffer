@@ -102,37 +102,14 @@ void Sniffer_thread::pkt_handler(u_char *dumpfile, const struct pcap_pkthdr *hea
             tcp_header *tcp = (tcp_header *)(pktdata + 14 + ip_size);
             pkt_display.sport = QString::number(ntohs(tcp->th_sport));
             pkt_display.dport = QString::number(ntohs(tcp->th_dport));
+
             switch (tcp->th_dport) {
             case 0x5000:
                 pkt_display.trans_proto = QString("HTTP");
                 break;
             case 0x1400:
             case 0x1500:
-                pkt_display.trans_proto = QString("TCP");
-                break;
-            case 0x1700:
-                pkt_display.trans_proto = QString("TELNET");
-                break;
-            case 0x1900:
-                pkt_display.trans_proto = QString("SMTP");
-                break;
-            case 0x3500:
-                pkt_display.trans_proto = QString("DNS");
-                break;
-            case 0x6e00:
-                pkt_display.trans_proto = QString("POP3");
-                break;
-            case 0xbb01:
-                pkt_display.trans_proto = QString("HTTPS");
-                break;
-            }
-            switch (tcp->th_sport) {
-            case 0x5000:
-                pkt_display.trans_proto = QString("HTTP");
-                break;
-            case 0x1400:
-            case 0x1500:
-                pkt_display.trans_proto = QString("TCP");
+                pkt_display.trans_proto = QString("FTP");
                 break;
             case 0x1700:
                 pkt_display.trans_proto = QString("TELNET");
@@ -150,8 +127,37 @@ void Sniffer_thread::pkt_handler(u_char *dumpfile, const struct pcap_pkthdr *hea
                 pkt_display.trans_proto = QString("HTTPS");
                 break;
             default:
-                pkt_display.trans_proto = QString("UNKNOWN");
+
+                switch (tcp->th_sport) {
+                case 0x5000:
+                    pkt_display.trans_proto = QString("HTTP");
+                    break;
+                case 0x1400:
+                case 0x1500:
+                    pkt_display.trans_proto = QString("FTP");
+                    break;
+                case 0x1700:
+                    pkt_display.trans_proto = QString("TELNET");
+                    break;
+                case 0x1900:
+                    pkt_display.trans_proto = QString("SMTP");
+                break;
+                case 0x3500:
+                    pkt_display.trans_proto = QString("DNS");
+                    break;
+                case 0x6e00:
+                    pkt_display.trans_proto = QString("POP3");
+                    break;
+                case 0xbb01:
+                    pkt_display.trans_proto = QString("HTTPS");
+                    break;
+                default:
+                    pkt_display.trans_proto = QString("UNKNOWN");
+                    break;
+                }
+                break;
             }
+
         }
     }
     pkt_display.pktdata = pktdata;
@@ -211,16 +217,36 @@ bool Sniffer_thread::disactived() {
     return !_active;
 }
 
+bool cmpFragments(fragments &op1, fragments &op2) {
+    //ascending sort
+    return (op1.offset < op2.offset);
+}
+
 bool Sniffer_thread::check_all_fragments(dg_seq d) {
     int totalLen = 0;
     fragments *f;
     f = d.fg;
     while(f->next != NULL) {
+        f = f->next;
         totalLen += f->len;
     }
     if (totalLen == d.len) {
         pkt_display.len = d.len;
         //code to assemble datagram
+        f = d.fg;
+        std::vector<fragments> collect;
+        while (f->next != NULL) {
+            f = f->next;
+            collect.insert(collect.end(),*f);
+        }
+        std::sort(collect.begin(),collect.end(),cmpFragments);
+        std::stringstream totalpl;
+        for(std::vector<fragments>::iterator iter = collect.begin();
+            iter != collect.end(); iter++) {
+            totalpl << std::string((char*)*iter->data);
+        }
+        std::string pl = totalpl.str();
+        pkt_display.pktdata = (u_char*)pl.c_str();
         return true;
     }
     else return false;

@@ -305,8 +305,8 @@
     </property>
     <addaction name="actionSave"/>
    </widget>
-   <addaction name="menu_Start"/>
    <addaction name="menu_File"/>
+   <addaction name="menu_Start"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
@@ -324,14 +324,25 @@
    <addaction name="actionSave"/>
   </widget>
   <action name="actionsniffclear">
+   <property name="icon">
+    <iconset resource="icon.qrc">
+     <normaloff>:/new/icon/res/1186688.gif</normaloff>:/new/icon/res/1186688.gif</iconset>
+   </property>
    <property name="text">
     <string>Clear</string>
    </property>
    <property name="toolTip">
     <string>clear the table</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
   </action>
   <action name="actionsniffpause">
+   <property name="icon">
+    <iconset resource="icon.qrc">
+     <normaloff>:/new/icon/res/560489.gif</normaloff>:/new/icon/res/560489.gif</iconset>
+   </property>
    <property name="text">
     <string>Pause</string>
    </property>
@@ -339,10 +350,14 @@
     <string>pause the sniffer, click Run to continue</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S</string>
+    <string>Shift+H</string>
    </property>
   </action>
   <action name="actionsniffrun">
+   <property name="icon">
+    <iconset resource="icon.qrc">
+     <normaloff>:/new/icon/res/1186321.gif</normaloff>:/new/icon/res/1186321.gif</iconset>
+   </property>
    <property name="text">
     <string>Run</string>
    </property>
@@ -354,16 +369,25 @@
    </property>
   </action>
   <action name="actionSave">
+   <property name="icon">
+    <iconset resource="icon.qrc">
+     <normaloff>:/new/icon/res/389.gif</normaloff>:/new/icon/res/389.gif</iconset>
+   </property>
    <property name="text">
     <string>Save</string>
    </property>
    <property name="toolTip">
     <string>save</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="icon.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>actionsniffrun</sender>
