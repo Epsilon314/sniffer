@@ -2,11 +2,15 @@
 #include "ui_mainwindow.h"
 #include "sniffer.h"
 
+//buff store packet infomation for select display
 const int PKTUPLIMIT = 80000;
 Pkt_display buff[PKTUPLIMIT];
+
+//path of temp save file
 const char* p_path = "temp.pcap";
 const QString q_path = QString("temp.pcap");
 
+//extern varieties to pass user settings to sniffer
 extern QString p_dev ;
 extern QString p_filter;
 
@@ -15,28 +19,37 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
 
+    //regist user-defined data structure before use they in signal-slot mechanism
     qRegisterMetaType<Pkt_display>("Pkt_display");
     qRegisterMetaType<Pkt_display>("Pkt_display&");
 
     ui->setupUi(this);
 
+    //set up the sniffer thread
     snifferthread = new Sniffer_thread();
 
     ui->comboBox->setUpdatesEnabled(1);
 
+    //disable table edit
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    //table select by row
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    //can only select one row at a time
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+
     ui->tableWidget->setColumnWidth(0,170);
     ui->tableWidget->setColumnWidth(1,170);
     ui->tableWidget->setColumnWidth(2,100);
     ui->tableWidget->setColumnWidth(3,100);
 
+    //initially find & display network interfaces
     findDev();
     updateDev();
 
+    //when a packet is sended by the sniffer thread, active the display func
     connect(snifferthread,SIGNAL(pkt_info(Pkt_display)),this,
             SLOT(addCapList(Pkt_display)));
+    //when a row of the table is selected, display the corespondenting infomation
     connect(ui->tableWidget,SIGNAL(cellClicked(int,int)),this,SLOT(displayPayload(int,int)));
     connect(ui->tableWidget,SIGNAL(cellClicked(int,int)),this,SLOT(updatePktInfo(int,int)));
 }
@@ -48,9 +61,16 @@ MainWindow::~MainWindow()
 
 void MainWindow::findDev()  {
 
+    /*
+    find all interfaces and add them to the comb-box
+
+    */
+
     pcap_if_t *listDev;
     pcap_if_t *device;
     char errbuf[PCAP_ERRBUF_SIZE];
+
+    ui->comboBox->clear();
 
     if(!pcap_findalldevs(&listDev,errbuf)) {
         for(device = listDev; device ; device = device->next) {
@@ -64,10 +84,18 @@ void MainWindow::findDev()  {
 }
 
 void MainWindow::updateDev() {
+    /*
+    each time user select one interface from the comb-box
+    call this func the pass the seletions to sniffer
+    */
     p_dev = ui->comboBox->currentText();
 }
 
 void MainWindow::startSniff() {
+    /*
+    start or continue the sinffer thread
+    and refresh user settings
+    */
     MainWindow::updateCheckboxState();
     MainWindow::generateFilterExpression();
     if (snifferthread->disactived()) {
@@ -85,6 +113,9 @@ void MainWindow::pauseSniff() {
 }
 
 void MainWindow::clearSniff() {
+    /*
+    clear all items in the table
+    */
     int rowC = ui->tableWidget->rowCount();
     for (int i = 0; i < rowC; i++) {
         ui->tableWidget->removeRow(0);
@@ -92,7 +123,13 @@ void MainWindow::clearSniff() {
 }
 
 void MainWindow::addCapList(Pkt_display pktdisplay) {
+    /*
+    display packet brief infomations in the table
+    */
+
+    //keep the scroll bar at the bottom
     ui->tableWidget->scrollToBottom();
+
     int rowC  = ui->tableWidget->rowCount();
     ui->tableWidget->insertRow(rowC);
 
@@ -117,6 +154,7 @@ void MainWindow::addCapList(Pkt_display pktdisplay) {
     }
     item_len = new QTableWidgetItem(pktdisplay.len);
 
+    //setting different background colors for different protocol
     if(pktdisplay.eth_proto == QString("ARP")) {
         item_sip->setBackgroundColor(QColor(200,150,120));
         item_dip->setBackgroundColor(QColor(200,150,120));
@@ -223,11 +261,16 @@ void MainWindow::addCapList(Pkt_display pktdisplay) {
     ui->tableWidget->setItem(rowC, 1, item_dip);
     ui->tableWidget->setItem(rowC, 2, item_proto);
     ui->tableWidget->setItem(rowC, 3, item_len);
+
+    //save the packet infomation by row count for future usage
     buff[rowC] = pktdisplay;
 
 }
 
 void MainWindow::displayPayload(int rowc,int) {
+    /*
+    display payload by hex and ascii( if printable )
+    */
     ui->textBrowser->clear();
     ui->textBrowser_2->clear();
 
@@ -248,6 +291,7 @@ void MainWindow::displayPayload(int rowc,int) {
             ui->textBrowser_2->insertPlainText(display);
         }
         else {
+            // use "." to present unprintable chars
             ui->textBrowser_2->insertPlainText(".");
         }
         payload ++;
@@ -255,6 +299,9 @@ void MainWindow::displayPayload(int rowc,int) {
 }
 
 void MainWindow::updateCheckboxState() {
+    /*
+    pass user selection of if active the reassemble func to snifferthread
+    */
     if(ui->checkBox->checkState() == Qt::Checked) {
         snifferthread->set_mode_reassamble(true);
     }
@@ -264,8 +311,13 @@ void MainWindow::updateCheckboxState() {
 }
 
 void MainWindow::updatePktInfo(int rowc,int) {
+    /*
+    display more packet infomation in another text browser
+    change to tree view like wireshark if have time
+    */
     ui->textBrowser_3->clear();
 
+    //read stored packet infomation by row count
     Pkt_display pkt = buff[rowc];
 
     QString devInfo = QString("Interface:%1 Length:%2").arg(p_dev).arg(pkt.len);
@@ -290,10 +342,16 @@ void MainWindow::updatePktInfo(int rowc,int) {
 }
 
 void MainWindow::generateFilterExpression() {
+    /*
+    convert user settings to BPF expressions
+    */
+
+    //if advanced input box is set, use it directly
     p_filter = QString("");
     if(ui->lineEdit_5->text() != QString("")) {
         p_filter = ui->lineEdit_6->text();
     }
+
     else {
         if(ui->lineEdit->text() != QString("")) {
             p_filter = p_filter + QString("%1 ").arg(ui->lineEdit->text());
@@ -323,17 +381,31 @@ void MainWindow::generateFilterExpression() {
             p_filter = p_filter + QString("dst host %1 ").arg(ui->lineEdit_5->text());
         }
     }
-    printf("%s\n",p_filter.toStdString().c_str());
+    //printf("%s\n",p_filter.toStdString().c_str());
 }
 
 void MainWindow::saveFileDiag() {
+    /*
+    save packet capture result in .pcap file
+    which can be read by wireshark
+    */
+
+    //tell the sniffer thread to generate the file
     snifferthread->saveDump();
+
+    //open a operating-system dependent file dialog
     QFileDialog *diag = new QFileDialog(this);
     diag->setWindowTitle("Save as");
+
+    //mode save, display any file type in detail
     diag->setAcceptMode(QFileDialog::AcceptSave);
     diag->setFileMode(QFileDialog::AnyFile);
     diag->setViewMode(QFileDialog::Detail);
+
+    //use .pcap extension
     QString path = QFileDialog::getSaveFileName(this,tr("Open File"),".",tr("Text Files(*.pcap)"));
+
+    //save failed dialog
     if (!QFile::copy(q_path,path)) {
         QMessageBox::warning(this, tr("Write File"),
                              tr("Can't open file:\n%1").arg(path));

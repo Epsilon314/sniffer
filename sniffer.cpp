@@ -1,19 +1,31 @@
 #include "sniffer.h"
 #include "mainwindow.h"
 
-
+//settings passed from gui
 QString p_dev;
 QString p_filter;
+
+//data structure containing processed data for gui-display
 Pkt_display Sniffer_thread::pkt_display;
+
+//data structure for fragments
 pkt_frag_info Sniffer_thread::pkt_frag;
+
+//dump file type defined by libpcap
 pcap_dumper_t *dumpfile;
+
+//temp save file path
 extern const char* p_path;
 
+//datagram cross-link-table head node
 dg_seq head;
 
 void Sniffer_thread::pkt_handler(u_char *dumpfile, const struct pcap_pkthdr *header,
                                  const u_char *pktdata) {
-
+    /*
+    callback func required by libpcap
+    doing packet analyze work
+    */
     pcap_dump(dumpfile,header,pktdata);
     eth_header *eth = (eth_header*)pktdata;
     pkt_display.smac = QString("%1:%2:%3:%4:%5:%6").arg(eth->eth_shost[0])
@@ -29,6 +41,7 @@ void Sniffer_thread::pkt_handler(u_char *dumpfile, const struct pcap_pkthdr *hea
                                                    .arg(eth->eth_dhost[3])
                                                    .arg(eth->eth_dhost[4])
                                                    .arg(eth->eth_dhost[5]);
+
     switch (ntohs(eth->eth_type)) {
     case 0x0800:
         pkt_display.eth_proto = QString("IP");
@@ -52,6 +65,7 @@ void Sniffer_thread::pkt_handler(u_char *dumpfile, const struct pcap_pkthdr *hea
     pkt_display.len = QString::number(header->len);
     pkt_frag.tlen = header->len;
 
+    //header should be large than 14 byte, otherwise drop it
     if(header->len >= 14) {
 
         ip_header *ip = (ip_header*)(pktdata+14);
@@ -96,6 +110,10 @@ void Sniffer_thread::pkt_handler(u_char *dumpfile, const struct pcap_pkthdr *hea
         pkt_display.dip = QString("%1.%2.%3.%4").arg(ip->ip_dst[0])
                 .arg(ip->ip_dst[1]).arg(ip->ip_dst[2]).arg(ip->ip_dst[3]);
 
+
+        /*ip-vhl contain version and head length infomation,
+        use bytewise & operation to extract the needed data
+        */
         int ip_size = (ip->ip_vhl & 0x0f) * 4;
         pkt_frag.head_size = ip_size;
         if (ip->ip_p == IPPROTO_TCP) {
@@ -177,24 +195,37 @@ void Sniffer_thread::run() {
     while(_active) {
         if (_refresh) {
             _refresh = false;
+
             dev = p_dev.toStdString().c_str();
             filter_exp = p_filter.toStdString().c_str();
+
+            //find network information
             if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
             exit(1);
             }
+
+            //open sniffer
             handle = pcap_open_live(dev, 1600, 1, 1000, errbuf);
             if (handle == NULL) {
                 exit(1);
             }
+
+            //check if is ethernet
             if (pcap_datalink(handle) != DLT_EN10MB) {
             exit(1);
             }
+
+            //compile bpf expression
             if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
                 exit(1);
             }
+
+            //apply the compiled filter
             if (pcap_setfilter(handle, &fp) == -1) {
                 exit(1);
             }
+
+            //save to file
             dumpfile = pcap_dump_open(handle,p_path);
         }
         pcap_loop(handle, 1, pkt_handler, (unsigned char*)dumpfile);
@@ -223,6 +254,11 @@ bool cmpFragments(fragments &op1, fragments &op2) {
 }
 
 bool Sniffer_thread::check_all_fragments(dg_seq d) {
+
+    //if all fragments length add up = total length
+    //means have captured all fragments
+    //reassamble the and tell the thread to emit the displsy snignal
+
     int totalLen = 0;
     fragments *f;
     f = d.fg;
@@ -257,13 +293,21 @@ bool Sniffer_thread::ip_Fragment_reassamble(bool enable) {
     if(enable) {
         //printf("%04x ",pkt_frag.ip_off);
 
+        //don't frag symbol
         int df = pkt_frag.ip_off & 0x0040;
+
+        //if offset all zero, it means the packet is not fragmented
+        //if don't frag symbol is set, the packet is not allowed to be fragmented
         if (pkt_frag.ip_off == 0 || df != 0) {
             return true;
         }
 
+        //use a cross link-list to do collect and reassamble work
+        //should add time-out mechanism to save memory
         fragments f;
         f.mf = ntohs(pkt_frag.ip_off) & 0x2000;
+
+        //extract the offset value
         f.offset = ntohs(pkt_frag.ip_off) & 0x1fff;
         int id = ntohs(pkt_frag.ip_id);
         f.len = pkt_frag.len;
@@ -276,6 +320,8 @@ bool Sniffer_thread::ip_Fragment_reassamble(bool enable) {
         while (d->next != NULL) {
             d = d->next;
             bool flag = true;
+            //say two fragments belong to one datagram
+            //if they have same source ip, dst ip, ip_id and ip protocol
             for(int i = 0; i < 4; i ++) {
                 if (d->ip_src[i] != pkt_frag.ip_src[i]) flag = false;
                 if (d->ip_dst[i] != pkt_frag.ip_dst[i]) flag = false;
